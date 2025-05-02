@@ -1,0 +1,14 @@
+# infrastructure/gateway/traefik.yml
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    exposedByDefault: false  # on doit taguer les containers explicitement
