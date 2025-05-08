@@ -1,0 +1,78 @@
+services:
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:24.0.1
+    command: start-dev
+    ports:
+      - "8080:8080"
+    environment:
+      KC_DB: dev-mem
+      KC_HTTP_PORT: 8080
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    networks:
+      - fms-net
+
+  traefik:
+    container_name: traefik
+    image: traefik:v3.0
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+      - --api.insecure=true
+    ports:
+      - "8081:8080"  # Traefik dashboard
+      - "8082:80"    # HTTP routing
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../gateway/traefik.yml:/etc/traefik/traefik.yml
+    networks:
+      - fms-net
+
+  hebergement:
+    build:
+      context: ../../hebergement_service
+    container_name: hebergement_service
+    ports:
+      - "8001:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hebergement.rule=PathPrefix(`/hebergement`)"
+      - "traefik.http.services.hebergement.loadbalancer.server.port=8000"
+    networks:
+      - fms-net
+    depends_on:
+      - keycloak
+      - traefik
+
+  evenement:
+    build:
+      context: ../../evenement_service
+    container_name: evenement_service
+    ports:
+      - "8002:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evenement.rule=PathPrefix(`/evenement`)"
+      - "traefik.http.services.evenement.loadbalancer.server.port=8000"
+    networks:
+      - fms-net
+    depends_on:
+      - keycloak
+      - traefik
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Postgres2025!
+      POSTGRES_DB: fms
+    ports:
+      - "5433:5432"  
+    networks:
+      - fms-net
+
+networks:
+  fms-net:
+    driver: bridge

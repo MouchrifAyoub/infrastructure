@@ -1,19 +1,13 @@
-# infrastructure/gateway/docker-compose.yml
-
 services:
   traefik:
     image: traefik:v3.0
     container_name: traefik
     command:
-    - --configFile=/etc/traefik/traefik.yml
-    - --api.dashboard=true
-    - --providers.docker=true
-    - --entrypoints.web.address=:80
-    - --entrypoints.websecure.address=:443
+      - --configFile=/etc/traefik/traefik.yml
+      - --api.insecure=true
     ports:
-    - "8082:80"     # port web public
-    - "8083:443"    # port HTTPS
-    - "8081:8080"   # dashboard
+      - "8081:8080"
+      - "8082:80" 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/etc/traefik/traefik.yml
@@ -22,4 +16,4 @@ services:
 
 networks:
   traefik-net:
-    external: true  # car partagé avec les autres sous-composes
+    external: true
